@@ -4,16 +4,18 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <cmath>
+#include <limits>
 
 using namespace std;
+
+const std::string USER_FILE = "users.txt";  // Đường dẫn file lưu danh sách người dùng
 
 UserManager::UserManager() 
 {
     loadUsersFromFile();
 }
 
-const std::vector<std::unique_ptr<User>>& UserManager::getUsers() const {
+const std::vector<std::shared_ptr<User>>& UserManager::getUsers() const {
     return m_users;
 }
 
@@ -28,7 +30,7 @@ bool UserManager::registerUser(const string& username, const string& password)
         return false;
     }
 
-    m_users.push_back(unique_ptr<User>(new User(username, password)));
+    m_users.push_back(make_shared<User>(username, password));
     
     saveUsersToFile();
     
@@ -36,44 +38,31 @@ bool UserManager::registerUser(const string& username, const string& password)
     return true;
 }
 
-// shared_ptr<User> UserManager::login(const string& username, const string& password)
-// {
-//     auto it = find_if(m_users.begin(), m_users.end(), 
-//         [&username](const unique_ptr<User>& user) { return user->getUsername() == username; });
-
-//     if (it != m_users.end() && (*it)->checkPassword(password))
-//     {
-//         m_currentUser = shared_ptr<User>(new User(**it));
-//         cout << "Login successful!" << endl;
-//         return m_currentUser;
-//     }
-
-//     cout << "Invalid username or password." << endl;
-//     return shared_ptr<User>();
-// }
-
 shared_ptr<User> UserManager::login(const string& username, const string& password)
 {
     auto it = find_if(m_users.begin(), m_users.end(), 
-        [&username](const unique_ptr<User>& user) { return user->getUsername() == username; });
+        [&username](const shared_ptr<User>& user) { return user->getUsername() == username; });
 
     if (it != m_users.end() && (*it)->checkPassword(password))
     {
-        // Không tạo User mới, mà trỏ trực tiếp đến User có sẵn
-        m_currentUser = shared_ptr<User>(it->get());  
+        m_currentUser = *it; // Giữ shared_ptr, không trỏ vào raw pointer
 
         cout << "Login successful!" << endl;
         return m_currentUser;
     }
 
     cout << "Invalid username or password." << endl;
-    return shared_ptr<User>();
+    return nullptr;
 }
-
 
 void UserManager::findMatchOpponent(shared_ptr<User> currentUser)
 {
-    // find opponent with level equivalent
+    if (!currentUser)
+    {
+        cout << "Error: No logged-in user to find an opponent for!" << endl;
+        return;
+    }
+
     double currentUserWinRate = currentUser->getWins() > 0 
         ? static_cast<double>(currentUser->getWins()) / (currentUser->getWins() + currentUser->getLosses()) 
         : 0.5;
@@ -94,24 +83,23 @@ void UserManager::findMatchOpponent(shared_ptr<User> currentUser)
             if (difference < bestDifference)
             {
                 bestDifference = difference;
-                bestOpponent = shared_ptr<User>(user.get());
+                bestOpponent = user;
             }
         }
     }
 
-     // random if can not find opponent
-     if (!bestOpponent && !m_users.empty())
-     {
-         auto it = std::find_if(m_users.begin(), m_users.end(), 
-             [&currentUser](const unique_ptr<User>& user) { 
-                 return user->getUsername() != currentUser->getUsername(); 
-             });
-         
-         if (it != m_users.end())
-         {
-             bestOpponent = shared_ptr<User>(new User(**it));
-         }
-     }
+    if (!bestOpponent && !m_users.empty())
+    {
+        auto it = find_if(m_users.begin(), m_users.end(), 
+            [&currentUser](const shared_ptr<User>& user) { 
+                return user->getUsername() != currentUser->getUsername(); 
+            });
+        
+        if (it != m_users.end())
+        {
+            bestOpponent = *it;
+        }
+    }
 
     if (bestOpponent)
     {
@@ -140,45 +128,11 @@ shared_ptr<User> UserManager::getCurrentUser() const
 bool UserManager::isUsernameTaken(const string& username) const
 {
     return any_of(m_users.begin(), m_users.end(), 
-        [&username](const unique_ptr<User>& user) { return user->getUsername() == username; });
+        [&username](const shared_ptr<User>& user) { return user->getUsername() == username; });
 }
-
-// void UserManager::saveUsersToFile()
-// {
-//     std::string USER_FILE = "D:\\New folder\\VsCode\\Project\\C_C++\\Mock Project\\users.txt";
-//     //D:\\New folder\\VsCode\\Project\\C_C++\\Mock Project
-//     //const std::string USER_FILE = "users.txt";
-
-//     ofstream file(USER_FILE, ios::trunc);
-//     if (!file.is_open())
-//     {
-//         cerr << "Error: Could not open file to save users." << endl;
-//         return;
-//     }
-
-//     cout << "Saving " << m_users.size() << " users..." << endl;
-
-//     for (const unique_ptr<User>& user : m_users)
-//     {
-//         string line = user->getUsername() + "," + 
-//                       user->getPassword() + "," + 
-//                       to_string(user->getWins()) + "," + 
-//                       to_string(user->getLosses());
-        
-//         file << line << endl;
-        
-//         cout << "Saved user: " << line << endl;
-//     }
-
-//     file.close();
-
-//     cout << "Users saved successfully." << endl;
-// }
 
 void UserManager::saveUsersToFile()
 {
-    std::string USER_FILE = "users.txt";
-
     ofstream file(USER_FILE, ios::trunc);
     if (!file.is_open())
     {
@@ -186,20 +140,16 @@ void UserManager::saveUsersToFile()
         return;
     }
 
-    for (const unique_ptr<User>& user : m_users)
+    for (const shared_ptr<User>& user : m_users)
     {
-        string line = user->getUsername() + "," + 
-                      user->getPassword() + "," + 
-                      to_string(user->getWins()) + "," + 
-                      to_string(user->getLosses()) + "," + 
-                      to_string(user->getDraws());
-        
-        file << line << endl;
+        file << user->getUsername() << "," 
+             << user->getPassword() << ","
+             << user->getWins() << ","
+             << user->getLosses() << ","
+             << user->getDraws() << endl;
     }
 
     file.close();
-
-    cout << "Users saved successfully to " << USER_FILE << endl;
 }
 
 void UserManager::loadUsersFromFile()
@@ -224,13 +174,12 @@ void UserManager::loadUsersFromFile()
         getline(ss, losses_str, ',');
         getline(ss, draws_str);
 
-        unique_ptr<User> user(new User(username, password));
-        
-        user->setWins(atoi(wins_str.c_str()));
-        user->setLosses(atoi(losses_str.c_str()));
-        user->setDraws(atoi(draws_str.c_str()));
+        shared_ptr<User> user = make_shared<User>(username, password);
+        user->setWins(stoi(wins_str));
+        user->setLosses(stoi(losses_str));
+        user->setDraws(stoi(draws_str));
 
-        m_users.push_back(move(user));
+        m_users.push_back(user);
     }
 
     file.close();

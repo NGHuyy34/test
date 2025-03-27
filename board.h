@@ -1,6 +1,8 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
+#define SIZE 10
+
 #include <iostream>
 #include <vector>
 
@@ -12,6 +14,7 @@ class Board
         Board();
         void displayBoard() const;
         void makeMove(int row, int col, char symbol);
+        char getCell(int row, int col) const;
         bool isValidMove(int row, int col) const;
         bool checkWin(int row, int col ,char symbol) const;
         bool checkDraw() const;

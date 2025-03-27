@@ -10,13 +10,16 @@ using namespace std;
 
 int Menu::showMainMenu()
 {
-    int choice;
     cout << "\n===== CARO GAME MAIN MENU =====" << endl;
     cout << "1. Play With Other Player" << endl;
     cout << "2. Play With Bot" << endl;
     cout << "3. Watch Replay" << endl;
-    cout << "4. Exit" << endl;
+    cout << "4. Show Player List" << endl;
+    cout << "5. Search Player" << endl;
+    cout << "6. Exit" << endl;
     cout << "Choose option: ";
+    
+    int choice;
     cin >> choice;
     return choice;
 }
@@ -52,7 +55,7 @@ void Menu::showUserAuthMenu()
             bool check = m_userManager.registerUser(username, password);
             if(check)
             {
-                auto user = m_userManager.login(username, password);
+                shared_ptr<User> user = m_userManager.login(username, password);
                 m_userManager.findMatchOpponent(user);
             }
             break;
@@ -64,7 +67,7 @@ void Menu::showUserAuthMenu()
             cin >> username;
             cout << "Enter password: ";
             cin >> password;
-            auto user = m_userManager.login(username, password);
+            shared_ptr<User> user = m_userManager.login(username, password);
             if (user)
             {
                 m_userManager.findMatchOpponent(user);
@@ -72,6 +75,7 @@ void Menu::showUserAuthMenu()
             else
             {
                 cout << "\nPress Enter to try again...";
+                cin.clear();
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cin.get();
             }
@@ -214,7 +218,7 @@ void Menu::showPlayerList()
     cout << string(50, '-') << endl;
 
     // Hiển thị thông tin từng người chơi
-    for (const auto& user : m_userManager.getUsers())
+    for (const shared_ptr<User>& user : m_userManager.getUsers())
     {
         cout << left << setw(20) << user->getUsername()
              << setw(10) << user->getWins()
@@ -237,22 +241,20 @@ void Menu::searchPlayer()
     cout << "Enter username to search: ";
     cin >> searchName;
 
-    // Tìm kiếm người chơi
+    // 🔹 **Sửa chỗ này:** Thay `unique_ptr<User>` → `shared_ptr<User>` trong `find_if`
     auto it = find_if(m_userManager.getUsers().begin(), m_userManager.getUsers().end(), 
-        [&searchName](const unique_ptr<User>& user) { 
+        [&searchName](const shared_ptr<User>& user) { 
             return user->getUsername() == searchName; 
         });
 
     if (it != m_userManager.getUsers().end())
     {
-        // Hiển thị thông tin chi tiết của người chơi
         cout << "\n===== PLAYER DETAILS =====" << endl;
         cout << "Username: " << (*it)->getUsername() << endl;
         cout << "Wins: " << (*it)->getWins() << endl;
         cout << "Losses: " << (*it)->getLosses() << endl;
         cout << "Draws: " << (*it)->getDraws() << endl;
 
-        // Tính tỷ lệ thắng
         double totalGames = (*it)->getWins() + (*it)->getLosses() + (*it)->getDraws();
         double winRate = totalGames > 0 ? ((*it)->getWins() / totalGames) * 100 : 0;
         cout << "Win Rate: " << fixed << setprecision(2) << winRate << "%" << endl;
@@ -273,17 +275,7 @@ void Menu::run()
     while (running)
     {
         system("cls");
-        cout << "\n===== CARO GAME MAIN MENU =====" << endl;
-        cout << "1. Play With Other Player" << endl;
-        cout << "2. Play With Bot" << endl;
-        cout << "3. Watch Replay" << endl;
-        cout << "4. Show Player List" << endl;
-        cout << "5. Search Player" << endl;
-        cout << "6. Exit" << endl;
-        cout << "Choose option: ";
-        
-        int choice;
-        cin >> choice;
+        int choice = showMainMenu();
 
         switch (choice)
         {
@@ -307,7 +299,7 @@ void Menu::run()
             running = false;
             break;
         default:
-            cout << "Invalid choice. Please try again!\n";
+            cout << "Invalid choice. Press Enter to try again!";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cin.get();
         }

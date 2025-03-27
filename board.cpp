@@ -1,8 +1,6 @@
 #include "board.h"
 #include <iomanip>
 
-#define SIZE 10
-
 using namespace std;
 
 Board::Board()
@@ -35,6 +33,11 @@ void Board::displayBoard() const
         }
         cout << "-" << endl;
     }
+}
+
+char Board::getCell(int row, int col) const
+{
+    return m_board[row][col];  // Giả sử m_board là mảng lưu trạng thái bàn cờ
 }
 
 bool Board::isValidMove(int row, int col) const
@@ -103,3 +106,5 @@ bool Board::checkDraw() const
     }
     return true;
 }
+
+

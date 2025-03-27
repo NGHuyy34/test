@@ -132,6 +132,7 @@ void Game::start()
 {
     // Xóa các nước đi cũ
     m_moves.clear();
+    cout << resetiosflags(ios::adjustfield);
 
     while(true)
     {
