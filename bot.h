@@ -5,7 +5,9 @@
 
 enum class Level
 {
-    EASY, MEDIUM, HARD
+    EASY, 
+    MEDIUM, 
+    HARD
 };
 
 class Bot : public Player
@@ -18,7 +20,9 @@ class Bot : public Player
 };
 
 int evaluateBoard(const Board& board, char botSymbol);
+int evaluatePosition(const Board& board, int row, int col, char symbol);
 int minimax(Board& board, int depth, bool isMax, int alpha, int beta, char botSymbol);
-std::vector<std::pair<int, int>> getCandidateMoves(const Board& board);
+//std::vector<std::pair<int, int>> getCandidateMoves(const Board& board);
+std::vector<std::pair<int, int>> getCandidateMoves(const Board& board, char botSymbol);
 
 #endif

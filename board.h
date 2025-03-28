@@ -18,6 +18,10 @@ class Board
         bool isValidMove(int row, int col) const;
         bool checkWin(int row, int col ,char symbol) const;
         bool checkDraw() const;
+
+        int getEmptyCells() const;
+        void undoMove(int row, int col);
+        bool isAdjacentToSymbol(int row, int col, char symbol) const;
 };
 
 #endif

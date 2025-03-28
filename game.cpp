@@ -196,6 +196,9 @@ void Game::start()
         if(m_board.checkDraw())
         {
             system("cls");
+            cout << "=> " << player1->getName() << " = " << player1->getSymbol() << ", "
+                 << player2->getName() << " = " << player2->getSymbol() << endl; 
+            cout << endl;
             m_board.displayBoard();
             cout << "Draw!" << endl;
             
@@ -208,12 +211,11 @@ void Game::start()
                 m_userManager->saveUsersToFile();
                 cout << "Users saved. Player 1 draws: " << m_player1User->getDraws() 
                     << ", Player 2 draws: " << m_player2User->getDraws() << endl;
-            }
-            
-            // Lưu replay
-            saveReplay();
 
-            cout << "Press Enter to continue...";
+                saveReplay();
+            }
+
+            cout << "Press Enter to return menu...";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cin.get();
             break;

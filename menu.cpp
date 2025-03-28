@@ -123,18 +123,12 @@ void Menu::showGameBotMenu()
         {
             Game game(2, Level::MEDIUM, &m_userManager);
             game.start();
-            cout << "Press Enter to return menu...";
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cin.get();
             break;
         }
         case 3: // Player vs Bot Hard
         {
             Game game(2, Level::HARD, &m_userManager);
             game.start();
-            cout << "Press Enter to return menu...";
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cin.get();
             break;
         }
         case 4: // Return to Main Menu
